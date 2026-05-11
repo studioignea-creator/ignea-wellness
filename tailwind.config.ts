@@ -48,6 +48,14 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        ignea: {
+          navy: "#49517e",
+          purple: "#84719b",
+          sage: "#bfd8d2",
+          skyblue: "#d4e1e2",
+          terracotta: "#e4a691",
+          blush: "#f5d9d6",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

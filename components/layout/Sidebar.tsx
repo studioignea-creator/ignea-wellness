@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, DollarSign, Calendar, Package, LogOut, Flame } from "lucide-react";
+import { LayoutDashboard, DollarSign, Calendar, Package, LogOut, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -25,12 +25,14 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="hidden md:flex w-60 flex-col border-r bg-background min-h-screen">
-      <div className="flex items-center gap-2 p-6 border-b">
-        <Flame className="h-6 w-6 text-primary" />
+    <aside className="hidden md:flex w-60 flex-col min-h-screen border-r" style={{ borderColor: "#d4e1e2", background: "#fff" }}>
+      <div className="flex items-center gap-3 p-6 border-b" style={{ borderColor: "#d4e1e2" }}>
+        <div className="h-9 w-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #84719b, #49517e)" }}>
+          <Sparkles className="h-4 w-4 text-white" />
+        </div>
         <div>
-          <p className="font-semibold text-sm leading-tight">Ignea Wellness</p>
-          <p className="text-xs text-muted-foreground">Studio</p>
+          <p className="font-semibold text-sm" style={{ color: "#49517e" }}>Ignea Wellness</p>
+          <p className="text-xs" style={{ color: "#84719b" }}>Studio</p>
         </div>
       </div>
 
@@ -43,10 +45,11 @@ export default function Sidebar() {
               href={href}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                active
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
               )}
+              style={{
+                background: active ? "#f5d9d6" : "transparent",
+                color: active ? "#49517e" : "#84719b",
+              }}
             >
               <Icon className="h-4 w-4" />
               {label}
@@ -55,11 +58,12 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="p-4 border-t">
+      <div className="p-4 border-t" style={{ borderColor: "#d4e1e2" }}>
         <Button
           variant="ghost"
           size="sm"
-          className="w-full justify-start text-muted-foreground"
+          className="w-full justify-start"
+          style={{ color: "#84719b" }}
           onClick={handleLogout}
         >
           <LogOut className="h-4 w-4 mr-2" />

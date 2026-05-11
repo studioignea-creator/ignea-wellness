@@ -1,4 +1,4 @@
-import { Flame, TrendingUp, AlertTriangle, Calendar } from "lucide-react";
+import { TrendingUp, AlertTriangle, Calendar, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatMXN } from "@/lib/currency";
@@ -17,11 +17,11 @@ async function getDashboardData() {
 
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
-  const [todayVentas, monthVentas, todayCitas, lowStock] = await Promise.all([
+  const [todayVentas, monthVentas, todayCitas, allProductos] = await Promise.all([
     supabase.from("ventas").select("monto, moneda, metodo_pago").gte("created_at", todayStart.toISOString()).lte("created_at", todayEnd.toISOString()),
     supabase.from("ventas").select("monto, moneda").gte("created_at", monthStart.toISOString()).eq("moneda", "MXN"),
     supabase.from("calendly_cache").select("calendly_uuid, start_time, end_time, invitee_name, event_type_name, status").gte("start_time", todayStart.toISOString()).lte("start_time", todayEnd.toISOString()).eq("status", "active").order("start_time"),
-    supabase.from("productos").select("nombre, marca, stock_actual, stock_minimo").filter("stock_actual", "lte", "stock_minimo" as unknown as number),
+    supabase.from("productos").select("nombre, marca, stock_actual, stock_minimo"),
   ]);
 
   const todayMXN = (todayVentas.data ?? []).filter((v) => v.moneda === "MXN").reduce((s, v) => s + v.monto, 0);
@@ -34,14 +34,9 @@ async function getDashboardData() {
     return acc;
   }, {});
 
-  return {
-    todayMXN,
-    todayCount,
-    monthTotal,
-    byMethod,
-    todayCitas: todayCitas.data ?? [],
-    lowStockProducts: lowStock.data ?? [],
-  };
+  const lowStockProducts = (allProductos.data ?? []).filter(p => p.stock_actual <= p.stock_minimo);
+
+  return { todayMXN, todayCount, monthTotal, byMethod, todayCitas: todayCitas.data ?? [], lowStockProducts };
 }
 
 const METODO_LABEL: Record<string, string> = {
@@ -56,99 +51,103 @@ export default async function DashboardPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-2xl mx-auto">
-      <div className="flex items-center gap-2 mb-6">
-        <Flame className="h-6 w-6 text-primary" />
+
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="h-10 w-10 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, #84719b, #49517e)" }}>
+          <Sparkles className="h-5 w-5 text-white" />
+        </div>
         <div>
-          <h1 className="text-xl font-bold">Ignea Wellness</h1>
-          <p className="text-xs text-muted-foreground capitalize">
+          <h1 className="text-xl font-semibold" style={{ color: "#49517e" }}>Ignea Wellness</h1>
+          <p className="text-xs capitalize" style={{ color: "#84719b" }}>
             {now.toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" })}
           </p>
         </div>
       </div>
 
       {/* Today Revenue */}
-      <Card className="mb-4 bg-primary text-primary-foreground">
-        <CardContent className="pt-6">
-          <p className="text-sm opacity-80">Hoy</p>
-          <p className="text-4xl font-bold mt-1">{formatMXN(data.todayMXN)}</p>
-          <p className="text-sm opacity-80 mt-1">{data.todayCount} venta{data.todayCount !== 1 ? "s" : ""}</p>
-          {Object.keys(data.byMethod).length > 0 && (
-            <div className="flex gap-3 mt-3 flex-wrap">
-              {Object.entries(data.byMethod).map(([m, v]) => (
-                <div key={m} className="text-xs opacity-80">
-                  {METODO_LABEL[m]}: <strong>{formatMXN(v)}</strong>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <div className="rounded-xl p-5 mb-4 text-white" style={{ background: "linear-gradient(135deg, #49517e 0%, #84719b 100%)" }}>
+        <p className="text-sm opacity-80 mb-1">Ingresos de hoy</p>
+        <p className="text-4xl font-bold">{formatMXN(data.todayMXN)}</p>
+        <p className="text-sm opacity-75 mt-1">{data.todayCount} venta{data.todayCount !== 1 ? "s" : ""}</p>
+        {Object.keys(data.byMethod).length > 0 && (
+          <div className="flex gap-4 mt-3 flex-wrap border-t border-white/20 pt-3">
+            {Object.entries(data.byMethod).map(([m, v]) => (
+              <div key={m} className="text-xs opacity-80">
+                {METODO_LABEL[m]}: <strong>{formatMXN(v)}</strong>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Month total */}
-      <Card className="mb-4">
-        <CardContent className="pt-6 flex items-center gap-3">
-          <TrendingUp className="h-5 w-5 text-muted-foreground" />
+      <Card className="mb-4 border-0" style={{ background: "#d4e1e2" }}>
+        <CardContent className="pt-5 pb-4 flex items-center gap-3">
+          <TrendingUp className="h-5 w-5" style={{ color: "#49517e" }} />
           <div>
-            <p className="text-xs text-muted-foreground">Este mes (MXN)</p>
-            <p className="text-2xl font-bold">{formatMXN(data.monthTotal)}</p>
+            <p className="text-xs" style={{ color: "#84719b" }}>Este mes</p>
+            <p className="text-2xl font-bold" style={{ color: "#49517e" }}>{formatMXN(data.monthTotal)}</p>
           </div>
         </CardContent>
       </Card>
 
       {/* Today appointments */}
-      <Card className="mb-4">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
+      <Card className="mb-4 border-0" style={{ background: "#f5d9d6" }}>
+        <CardHeader className="pb-2 pt-4 px-5">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2" style={{ color: "#49517e" }}>
             <Calendar className="h-4 w-4" />
             Citas de hoy ({data.todayCitas.length})
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-5 pb-4">
           {data.todayCitas.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Sin citas agendadas hoy</p>
+            <p className="text-sm" style={{ color: "#84719b" }}>Sin citas agendadas hoy</p>
           ) : (
             <div className="space-y-2">
               {data.todayCitas.map((c) => (
                 <div key={c.calendly_uuid} className="flex items-center justify-between text-sm">
                   <div>
-                    <span className="font-medium">
+                    <span className="font-medium" style={{ color: "#49517e" }}>
                       {new Date(c.start_time).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}
                     </span>
-                    {c.invitee_name && <span className="text-muted-foreground ml-2">{c.invitee_name}</span>}
+                    {c.invitee_name && <span className="ml-2" style={{ color: "#84719b" }}>{c.invitee_name}</span>}
                   </div>
                   {c.event_type_name && (
-                    <span className="text-xs text-muted-foreground">{c.event_type_name}</span>
+                    <span className="text-xs" style={{ color: "#84719b" }}>{c.event_type_name}</span>
                   )}
                 </div>
               ))}
             </div>
           )}
           <Link href="/agenda">
-            <Button variant="outline" size="sm" className="mt-3 w-full">Ver agenda completa</Button>
+            <Button variant="outline" size="sm" className="mt-3 w-full border-0 text-white text-xs" style={{ background: "#84719b" }}>
+              Ver agenda completa
+            </Button>
           </Link>
         </CardContent>
       </Card>
 
-      {/* Low stock alert */}
+      {/* Low stock */}
       {data.lowStockProducts.length > 0 && (
-        <Card className="border-amber-200 bg-amber-50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2 text-amber-800">
-              <AlertTriangle className="h-4 w-4" />
+        <Card className="border-0" style={{ background: "#bfd8d2" }}>
+          <CardHeader className="pb-2 pt-4 px-5">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2" style={{ color: "#49517e" }}>
+              <AlertTriangle className="h-4 w-4" style={{ color: "#e4a691" }} />
               Stock bajo ({data.lowStockProducts.length})
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-5 pb-4">
             <div className="space-y-1">
               {data.lowStockProducts.map((p) => (
-                <div key={p.nombre} className="flex justify-between text-sm text-amber-800">
+                <div key={p.nombre} className="flex justify-between text-sm" style={{ color: "#49517e" }}>
                   <span>{p.nombre}</span>
                   <span className="font-medium">{p.stock_actual} / {p.stock_minimo} mín</span>
                 </div>
               ))}
             </div>
             <Link href="/productos">
-              <Button variant="outline" size="sm" className="mt-3 w-full border-amber-300 text-amber-800 hover:bg-amber-100">
+              <Button variant="outline" size="sm" className="mt-3 w-full border-0 text-white text-xs" style={{ background: "#49517e" }}>
                 Gestionar stock
               </Button>
             </Link>

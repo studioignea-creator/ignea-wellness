@@ -5,47 +5,46 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 20 14.3% 4.1%;
-    --card: 0 0% 100%;
-    --card-foreground: 20 14.3% 4.1%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 20 14.3% 4.1%;
-    --primary: 333 60% 52%;
-    --primary-foreground: 60 9.1% 97.8%;
-    --secondary: 60 4.8% 95.9%;
-    --secondary-foreground: 24 9.8% 10%;
-    --muted: 60 4.8% 95.9%;
-    --muted-foreground: 25 5.3% 44.7%;
-    --accent: 60 4.8% 95.9%;
-    --accent-foreground: 24 9.8% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 60 9.1% 97.8%;
-    --border: 20 5.9% 90%;
-    --input: 20 5.9% 90%;
-    --ring: 333 60% 52%;
-    --radius: 0.75rem;
-  }
+    --foreground: 231 27% 20%;
 
-  .dark {
-    --background: 20 14.3% 4.1%;
-    --foreground: 60 9.1% 97.8%;
-    --card: 20 14.3% 4.1%;
-    --card-foreground: 60 9.1% 97.8%;
-    --popover: 20 14.3% 4.1%;
-    --popover-foreground: 60 9.1% 97.8%;
-    --primary: 333 60% 62%;
-    --primary-foreground: 24 9.8% 10%;
-    --secondary: 12 6.5% 15.1%;
-    --secondary-foreground: 60 9.1% 97.8%;
-    --muted: 12 6.5% 15.1%;
-    --muted-foreground: 24 5.4% 63.9%;
-    --accent: 12 6.5% 15.1%;
-    --accent-foreground: 60 9.1% 97.8%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 60 9.1% 97.8%;
-    --border: 12 6.5% 15.1%;
-    --input: 12 6.5% 15.1%;
-    --ring: 333 60% 62%;
+    --card: 0 0% 100%;
+    --card-foreground: 231 27% 20%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 231 27% 20%;
+
+    /* Primary: #84719b — morado medio */
+    --primary: 267 17% 53%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary: #bfd8d2 — sage/menta */
+    --secondary: 166 24% 80%;
+    --secondary-foreground: 231 27% 30%;
+
+    /* Muted: #d4e1e2 — azul gris suave */
+    --muted: 184 20% 86%;
+    --muted-foreground: 231 15% 45%;
+
+    /* Accent: #f5d9d6 — rosa suave */
+    --accent: 6 61% 90%;
+    --accent-foreground: 231 27% 25%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 184 20% 86%;
+    --input: 184 20% 86%;
+    --ring: 267 17% 53%;
+
+    --radius: 0.75rem;
+
+    /* Custom Ignea colors */
+    --ignea-navy: 231 27% 39%;
+    --ignea-purple: 267 17% 53%;
+    --ignea-sage: 166 24% 80%;
+    --ignea-skyblue: 184 20% 86%;
+    --ignea-terracotta: 15 61% 73%;
+    --ignea-blush: 6 61% 90%;
   }
 }
 
