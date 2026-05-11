@@ -14,7 +14,7 @@ const SERVICIOS_PAQUETE = [
   "Paquete 5 sesiones",
   "Paquete 10 sesiones",
   "Paquete personalizado",
-  "Otro",
+  "Agregar servicio personalizado",
 ];
 
 const METODOS: { value: MetodoPago; label: string }[] = [
@@ -52,7 +52,7 @@ export default function NuevoPaqueteForm({ open, onClose, onSaved, prefill }: Pr
   }
 
   async function handleSave() {
-    const servicioFinal = servicio === "Otro" ? servicioCustom.trim() : servicio;
+    const servicioFinal = servicio === "Agregar servicio personalizado" ? servicioCustom.trim() : servicio;
     if (!cliente.trim()) { toast.error("Escribe el nombre de la clienta"); return; }
     if (!servicioFinal) { toast.error("Escribe el nombre del servicio"); return; }
     if (!monto || parseFloat(monto) <= 0) { toast.error("Ingresa el monto del paquete"); return; }
@@ -108,7 +108,7 @@ export default function NuevoPaqueteForm({ open, onClose, onSaved, prefill }: Pr
             </Select>
           </div>
 
-          {servicio === "Otro" && (
+          {servicio === "Agregar servicio personalizado" && (
             <div className="space-y-1">
               <Label style={{ color: "#49517e" }}>Nombre del servicio</Label>
               <Input placeholder="Ej: Masaje + Reiki, Terapia especial..." value={servicioCustom}
