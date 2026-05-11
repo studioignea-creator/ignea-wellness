@@ -8,8 +8,11 @@ export async function GET(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
-  const from = searchParams.get("from") ?? new Date().toISOString().split("T")[0];
-  const to = searchParams.get("to") ?? new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0];
+  // Default: 6 months back to 2 months ahead — covers full history + upcoming
+  const defaultFrom = new Date(Date.now() - 180 * 86400000).toISOString().split("T")[0];
+  const defaultTo = new Date(Date.now() + 60 * 86400000).toISOString().split("T")[0];
+  const from = searchParams.get("from") ?? defaultFrom;
+  const to = searchParams.get("to") ?? defaultTo;
 
   const { data, error } = await supabase
     .from("calendly_cache")
@@ -22,7 +25,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(data ?? []);
 }
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -31,9 +34,12 @@ export async function POST() {
     return NextResponse.json({ error: "Calendly no configurado" }, { status: 503 });
   }
 
+  const body = await req.json().catch(() => ({}));
+  const mesesAtras = body.meses ?? 1;
+
   const now = new Date();
-  const minStart = new Date(now.getTime() - 7 * 86400000).toISOString();
-  const maxStart = new Date(now.getTime() + 30 * 86400000).toISOString();
+  const minStart = new Date(now.getTime() - mesesAtras * 30 * 86400000).toISOString();
+  const maxStart = new Date(now.getTime() + 60 * 86400000).toISOString();
 
   try {
     const events = await fetchCalendlyEvents(minStart, maxStart);

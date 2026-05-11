@@ -20,45 +20,50 @@ export async function fetchCalendlyEvents(
   minStart: string,
   maxStart: string
 ): Promise<CalendlyEvent[]> {
-  const params = new URLSearchParams({
-    user: USER_URI,
-    min_start_time: minStart,
-    max_start_time: maxStart,
-    status: "active",
-    count: "100",
-  });
-
-  const data = await calendlyFetch(`/scheduled_events?${params}`);
   const events: CalendlyEvent[] = [];
+  let pageToken: string | null = null;
 
-  for (const ev of data.collection ?? []) {
-    const uuid = ev.uri.split("/scheduled_events/")[1];
-    let invitee_name: string | null = null;
-    let invitee_email: string | null = null;
-
-    try {
-      const inv = await calendlyFetch(`/scheduled_events/${uuid}/invitees`);
-      const first = inv.collection?.[0];
-      if (first) {
-        invitee_name = first.name ?? null;
-        invitee_email = first.email ?? null;
-      }
-    } catch {
-      // invitee fetch failed — continue without it
-    }
-
-    events.push({
-      calendly_uuid: uuid,
-      start_time: ev.start_time,
-      end_time: ev.end_time,
-      status: ev.status,
-      invitee_name,
-      invitee_email,
-      event_type_name: ev.name ?? null,
-      location: ev.location?.join_url ?? ev.location?.location ?? null,
-      synced_at: new Date().toISOString(),
+  do {
+    const params = new URLSearchParams({
+      user: USER_URI,
+      min_start_time: minStart,
+      max_start_time: maxStart,
+      count: "100",
     });
-  }
+    if (pageToken) params.set("page_token", pageToken);
+
+    const data = await calendlyFetch(`/scheduled_events?${params}`);
+    pageToken = data.pagination?.next_page_token ?? null;
+
+    for (const ev of data.collection ?? []) {
+      const uuid = ev.uri.split("/scheduled_events/")[1];
+      let invitee_name: string | null = null;
+      let invitee_email: string | null = null;
+
+      try {
+        const inv = await calendlyFetch(`/scheduled_events/${uuid}/invitees`);
+        const first = inv.collection?.[0];
+        if (first) {
+          invitee_name = first.name ?? null;
+          invitee_email = first.email ?? null;
+        }
+      } catch {
+        // invitee fetch failed — continue without it
+      }
+
+      events.push({
+        calendly_uuid: uuid,
+        start_time: ev.start_time,
+        end_time: ev.end_time,
+        status: ev.status,
+        invitee_name,
+        invitee_email,
+        event_type_name: ev.name ?? null,
+        location: ev.location?.join_url ?? ev.location?.location ?? null,
+        synced_at: new Date().toISOString(),
+      });
+    }
+  } while (pageToken);
 
   return events;
 }
