@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatMXN } from "@/lib/currency";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import MensajeAmor from "@/components/dashboard/MensajeAmor";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,8 @@ export default async function DashboardPage() {
           </p>
         </div>
       </div>
+
+      <MensajeAmor />
 
       {/* Today Revenue */}
       <div className="rounded-xl p-5 mb-4 text-white" style={{ background: "linear-gradient(135deg, #49517e 0%, #84719b 100%)" }}>
