@@ -57,7 +57,7 @@ export default function SalesList({ ventas, onRefresh }: Props) {
     return (
       <div className="text-center py-16 text-muted-foreground">
         <p>No hay ventas registradas.</p>
-        <p className="text-sm mt-1">Toca "+ Nueva venta" para empezar.</p>
+        <p className="text-sm mt-1">Toca &quot;+ Nueva venta&quot; para empezar.</p>
       </div>
     );
   }

@@ -77,7 +77,7 @@ export default function AgendaPage() {
       )}
 
       <p className="text-xs text-muted-foreground text-center mt-6">
-        Las citas se obtienen de Calendly. Toca "Sincronizar" para actualizar.
+        Las citas se obtienen de Calendly. Toca &quot;Sincronizar&quot; para actualizar.
       </p>
     </div>
   );
