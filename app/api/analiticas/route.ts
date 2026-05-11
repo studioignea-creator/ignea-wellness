@@ -7,51 +7,43 @@ export async function GET(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
-  const periodo = searchParams.get("periodo") ?? "mes"; // "semana" | "mes" | "trimestre"
+  const dias = parseInt(searchParams.get("dias") ?? "30");
 
   const now = new Date();
-  let desde: Date;
-
-  if (periodo === "semana") {
-    desde = new Date(now);
-    desde.setDate(now.getDate() - 7);
-  } else if (periodo === "trimestre") {
-    desde = new Date(now);
-    desde.setMonth(now.getMonth() - 3);
-  } else {
-    desde = new Date(now.getFullYear(), now.getMonth(), 1);
-  }
+  const desde = new Date(now.getTime() - dias * 86400000);
 
   const [ventas, citas] = await Promise.all([
     supabase.from("ventas").select("*").gte("created_at", desde.toISOString()).order("created_at"),
-    supabase.from("calendly_cache").select("*").gte("start_time", desde.toISOString()).order("start_time"),
+    supabase.from("calendly_cache").select("*").gte("start_time", desde.toISOString()).order("start_time", { ascending: false }),
   ]);
 
   const ventasData = ventas.data ?? [];
   const citasData = citas.data ?? [];
 
-  // ── Financiero ──────────────────────────────────
-  const totalMXN = ventasData.filter(v => v.moneda === "MXN").reduce((s, v) => s + v.monto, 0);
-  const totalUSD = ventasData.filter(v => v.moneda === "USD").reduce((s, v) => s + v.monto, 0);
-  const ticketPromedio = ventasData.length > 0 ? totalMXN / ventasData.filter(v => v.moneda === "MXN").length : 0;
+  // ── Financiero ──────────────────────────────────────────
+  const ventasMXN = ventasData.filter(v => v.moneda === "MXN");
+  const ventasUSD = ventasData.filter(v => v.moneda === "USD");
+  const totalMXN = ventasMXN.reduce((s, v) => s + v.monto, 0);
+  const totalUSD = ventasUSD.reduce((s, v) => s + v.monto, 0);
+  const ticketPromedio = ventasMXN.length > 0 ? totalMXN / ventasMXN.length : 0;
 
-  // ── Por servicio ────────────────────────────────
+  // ── Por servicio ────────────────────────────────────────
   const porServicio: Record<string, { count: number; total: number }> = {};
-  for (const v of ventasData.filter(v => v.moneda === "MXN")) {
+  for (const v of ventasMXN) {
     if (!porServicio[v.servicio]) porServicio[v.servicio] = { count: 0, total: 0 };
     porServicio[v.servicio].count++;
     porServicio[v.servicio].total += v.monto;
   }
 
-  // ── Por método de pago ──────────────────────────
+  // ── Por método de pago ──────────────────────────────────
   const porMetodo: Record<string, number> = {};
-  for (const v of ventasData.filter(v => v.moneda === "MXN")) {
+  for (const v of ventasMXN) {
     porMetodo[v.metodo_pago] = (porMetodo[v.metodo_pago] ?? 0) + v.monto;
   }
 
-  // ── Ingresos por semana (últimas 8 semanas) ──────
+  // ── Ingresos por semana ─────────────────────────────────
   const semanas: Record<string, number> = {};
-  for (const v of ventasData.filter(v => v.moneda === "MXN")) {
+  for (const v of ventasMXN) {
     const d = new Date(v.created_at);
     const monday = new Date(d);
     monday.setDate(d.getDate() - d.getDay() + 1);
@@ -59,44 +51,64 @@ export async function GET(req: NextRequest) {
     semanas[key] = (semanas[key] ?? 0) + v.monto;
   }
 
-  // ── Calendly analytics ──────────────────────────
-  const agendadas = citasData.filter(c => c.status === "active").length;
-  const canceladas = citasData.filter(c => c.status === "canceled").length;
-  const asistieron = citasData.filter(c => c.asistio === true).length;
-  const noAsistieron = citasData.filter(c => c.asistio === false).length;
-
-  // % cierre automático: citas con venta registrada
-  const calendlyUuidsConVenta = new Set(ventasData.map(v => v.calendly_event_uuid).filter(Boolean));
-  const citasConVenta = citasData.filter(c => calendlyUuidsConVenta.has(c.calendly_uuid)).length;
-  const totalCitas = agendadas + canceladas;
-  const pctCierre = totalCitas > 0 ? Math.round((citasConVenta / agendadas) * 100) : 0;
-
-  // Citas por tipo de servicio
-  const citasPorTipo: Record<string, number> = {};
-  for (const c of citasData.filter(c => c.status === "active")) {
-    const tipo = c.event_type_name ?? "Otro";
-    citasPorTipo[tipo] = (citasPorTipo[tipo] ?? 0) + 1;
-  }
-
-  // Citas por semana
-  const citasSemana: Record<string, { agendadas: number; canceladas: number }> = {};
+  // ── Citas por semana ────────────────────────────────────
+  const citasSemana: Record<string, { agendadas: number; canceladas: number; asistidas: number }> = {};
   for (const c of citasData) {
     const d = new Date(c.start_time);
     const monday = new Date(d);
     monday.setDate(d.getDate() - d.getDay() + 1);
     const key = monday.toISOString().split("T")[0];
-    if (!citasSemana[key]) citasSemana[key] = { agendadas: 0, canceladas: 0 };
+    if (!citasSemana[key]) citasSemana[key] = { agendadas: 0, canceladas: 0, asistidas: 0 };
     if (c.status === "active") citasSemana[key].agendadas++;
     else citasSemana[key].canceladas++;
+    if (c.asistio === true) citasSemana[key].asistidas++;
   }
 
-  // Clientes nuevos vs recurrentes
+  // ── Citas por día de semana ─────────────────────────────
+  const porDiaSemana = [0, 0, 0, 0, 0, 0, 0]; // Dom-Sáb
+  for (const c of citasData.filter((c: { status: string }) => c.status === "active")) {
+    const day = new Date(c.start_time).getDay();
+    porDiaSemana[day]++;
+  }
+
+  // ── Citas por hora ──────────────────────────────────────
+  const porHora: Record<number, number> = {};
+  for (const c of citasData.filter((c: { status: string }) => c.status === "active")) {
+    const h = new Date(c.start_time).getHours();
+    porHora[h] = (porHora[h] ?? 0) + 1;
+  }
+
+  // ── Calendly KPIs ───────────────────────────────────────
+  const agendadas = citasData.filter((c: { status: string }) => c.status === "active").length;
+  const canceladas = citasData.filter((c: { status: string }) => c.status === "canceled").length;
+  const asistieron = citasData.filter((c: { asistio: boolean }) => c.asistio === true).length;
+  const noAsistieron = citasData.filter((c: { asistio: boolean }) => c.asistio === false).length;
+  const sinConfirmar = agendadas - asistieron - noAsistieron;
+
+  const calendlyUuidsConVenta = new Set(ventasData.map((v: { calendly_event_uuid: string }) => v.calendly_event_uuid).filter(Boolean));
+  const citasConVenta = citasData.filter((c: { calendly_uuid: string }) => calendlyUuidsConVenta.has(c.calendly_uuid)).length;
+  const pctCierre = agendadas > 0 ? Math.round((citasConVenta / agendadas) * 100) : 0;
+  const pctAsistencia = (asistieron + noAsistieron) > 0 ? Math.round((asistieron / (asistieron + noAsistieron)) * 100) : 0;
+  const pctCancelacion = (agendadas + canceladas) > 0 ? Math.round((canceladas / (agendadas + canceladas)) * 100) : 0;
+
+  // ── Clientes nuevos vs recurrentes ──────────────────────
   const emailCount: Record<string, number> = {};
-  for (const c of citasData.filter(c => c.invitee_email)) {
+  for (const c of citasData.filter((c: { invitee_email: string }) => c.invitee_email)) {
     emailCount[c.invitee_email] = (emailCount[c.invitee_email] ?? 0) + 1;
   }
-  const clientesNuevos = Object.values(emailCount).filter(n => n === 1).length;
-  const clientesRecurrentes = Object.values(emailCount).filter(n => n > 1).length;
+
+  // ── Lista completa de citas ─────────────────────────────
+  const citasLista = citasData.map((c: Record<string, unknown>) => ({
+    calendly_uuid: c.calendly_uuid,
+    start_time: c.start_time,
+    end_time: c.end_time,
+    status: c.status,
+    invitee_name: c.invitee_name,
+    invitee_email: c.invitee_email,
+    event_type_name: c.event_type_name,
+    asistio: c.asistio,
+    tieneVenta: calendlyUuidsConVenta.has(c.calendly_uuid as string),
+  }));
 
   return NextResponse.json({
     financiero: { totalMXN, totalUSD, ticketPromedio, totalVentas: ventasData.length },
@@ -108,12 +120,21 @@ export async function GET(req: NextRequest) {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([semana, total]) => ({ semana, total })),
     calendly: {
-      agendadas, canceladas, asistieron, noAsistieron,
-      citasConVenta, pctCierre, citasPorTipo,
+      agendadas, canceladas, asistieron, noAsistieron, sinConfirmar,
+      citasConVenta, pctCierre, pctAsistencia, pctCancelacion,
       citasSemana: Object.entries(citasSemana)
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([semana, d]) => ({ semana, ...d })),
-      clientesNuevos, clientesRecurrentes,
+      porDiaSemana: porDiaSemana.map((count, i) => ({
+        dia: ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"][i],
+        count,
+      })),
+      porHora: Object.entries(porHora)
+        .map(([h, count]) => ({ hora: `${h.padStart(2, "0")}:00`, count }))
+        .sort((a, b) => a.hora.localeCompare(b.hora)),
+      clientesNuevos: Object.values(emailCount).filter(n => n === 1).length,
+      clientesRecurrentes: Object.values(emailCount).filter(n => n > 1).length,
+      citasLista,
     },
   });
 }
