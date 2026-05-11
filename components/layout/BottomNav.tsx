@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, DollarSign, Calendar, Layers, BarChart2 } from "lucide-react";
+import { LayoutDashboard, DollarSign, Calendar, Layers, BarChart2, Receipt } from "lucide-react";
 
 const TABS = [
   { href: "/", label: "Inicio", icon: LayoutDashboard },
   { href: "/ventas", label: "Ventas", icon: DollarSign },
   { href: "/agenda", label: "Agenda", icon: Calendar },
+  { href: "/gastos", label: "Gastos", icon: Receipt },
   { href: "/paquetes", label: "Paquetes", icon: Layers },
   { href: "/analiticas", label: "Stats", icon: BarChart2 },
 ];
