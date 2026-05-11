@@ -204,6 +204,12 @@ export default function AnaliticasPage() {
               sub="citas → venta" color="#e4a691" icon={Target} />
           </div>
 
+          {meta?.configured && meta?.error && (
+            <div className="rounded-xl p-3 mt-4 text-xs" style={{ background: "#fff5f5", color: "#c0555a", border: "1px solid #f5d9d6" }}>
+              <strong>Meta Ads — error:</strong> {meta.error}
+            </div>
+          )}
+
           {meta?.configured && !meta?.error && (
             <>
               <SectionTitle>📣 Meta Ads</SectionTitle>

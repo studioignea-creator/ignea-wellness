@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const fields = "spend,impressions,clicks,reach,cpm,cpc,actions";
-    const url = `https://graph.facebook.com/v19.0/${META_AD_ACCOUNT}/insights?fields=${fields}&time_range={"since":"${since}","until":"${until}"}&level=account&access_token=${META_TOKEN}`;
+    const url = `https://graph.facebook.com/v22.0/${META_AD_ACCOUNT}/insights?fields=${fields}&time_range={"since":"${since}","until":"${until}"}&level=account&access_token=${META_TOKEN}`;
 
     const res = await fetch(url, { cache: "no-store" });
     const json = await res.json();
