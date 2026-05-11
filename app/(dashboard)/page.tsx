@@ -1,4 +1,4 @@
-import { TrendingUp, AlertTriangle, Calendar, Sparkles } from "lucide-react";
+import { TrendingUp, AlertTriangle, Calendar, Sparkles, AlertCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatMXN } from "@/lib/currency";
@@ -26,11 +26,19 @@ async function getDashboardData() {
   monthEnd.setHours(23, 59, 59, 999);
   const monthName = now.toLocaleDateString("es-MX", { month: "long", year: "numeric" });
 
-  const [weekVentas, monthVentas, todayCitas, allProductos] = await Promise.all([
+  const SISTEMA_DESDE = "2026-05-01";
+
+  const [weekVentas, monthVentas, todayCitas, allProductos, pendientesQ] = await Promise.all([
     supabase.from("ventas").select("monto, moneda, metodo_pago").gte("created_at", weekStart.toISOString()).lte("created_at", todayEnd.toISOString()),
     supabase.from("ventas").select("monto, moneda").gte("created_at", monthStart.toISOString()).lte("created_at", monthEnd.toISOString()).eq("moneda", "MXN"),
     supabase.from("calendly_cache").select("calendly_uuid, start_time, end_time, invitee_name, event_type_name, status").gte("start_time", todayStart.toISOString()).lte("start_time", todayEnd.toISOString()).eq("status", "active").order("start_time"),
     supabase.from("productos").select("nombre, marca, stock_actual, stock_minimo"),
+    supabase.from("calendly_cache")
+      .select("calendly_uuid, invitee_name, start_time")
+      .eq("status", "active")
+      .gte("start_time", SISTEMA_DESDE)
+      .lt("end_time", now.toISOString())
+      .is("asistio", null),
   ]);
 
   const weekMXN = (weekVentas.data ?? []).filter((v) => v.moneda === "MXN").reduce((s, v) => s + v.monto, 0);
@@ -45,7 +53,9 @@ async function getDashboardData() {
 
   const lowStockProducts = (allProductos.data ?? []).filter(p => p.stock_actual <= p.stock_minimo);
 
-  return { weekMXN, weekCount, monthTotal, monthName, byMethod, todayCitas: todayCitas.data ?? [], lowStockProducts };
+  const pendientesCitas = pendientesQ.data ?? [];
+
+  return { weekMXN, weekCount, monthTotal, monthName, byMethod, todayCitas: todayCitas.data ?? [], lowStockProducts, pendientesCitas };
 }
 
 const METODO_LABEL: Record<string, string> = {
@@ -75,6 +85,26 @@ export default async function DashboardPage() {
       </div>
 
       <MensajeAmor />
+
+      {/* Alerta pendientes de confirmar */}
+      {data.pendientesCitas.length > 0 && (
+        <Link href="/agenda">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-4 transition-opacity hover:opacity-80"
+            style={{ background: "#fff8f5", border: "1px solid #f5d9d6" }}>
+            <AlertCircle className="h-4 w-4 shrink-0" style={{ color: "#c0555a" }} />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold" style={{ color: "#c0555a" }}>
+                {data.pendientesCitas.length} cita{data.pendientesCitas.length !== 1 ? "s" : ""} sin confirmar asistencia
+              </p>
+              <p className="text-xs truncate" style={{ color: "#84719b" }}>
+                {data.pendientesCitas.slice(0, 2).map(c => c.invitee_name ?? "Sin nombre").join(", ")}
+                {data.pendientesCitas.length > 2 ? ` +${data.pendientesCitas.length - 2} más` : ""}
+              </p>
+            </div>
+            <span className="text-xs shrink-0" style={{ color: "#c0555a" }}>→ Confirmar</span>
+          </div>
+        </Link>
+      )}
 
       {/* Week Revenue */}
       <div className="rounded-xl p-5 mb-4 text-white" style={{ background: "linear-gradient(135deg, #49517e 0%, #84719b 100%)" }}>

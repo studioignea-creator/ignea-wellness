@@ -15,8 +15,10 @@ export default function AgendaPage() {
   const fullSyncDone = useRef(false);
 
   const now = new Date();
+  const SISTEMA_DESDE = new Date("2026-05-01T00:00:00");
   const pendientes = events.filter(e =>
     e.status === "active" &&
+    new Date(e.start_time) >= SISTEMA_DESDE &&
     new Date(e.end_time) < now &&
     (e.asistio === null || e.asistio === undefined)
   );

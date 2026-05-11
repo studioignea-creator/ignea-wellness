@@ -136,6 +136,13 @@ export default function AnaliticasPage() {
     return `dias=${dias}`;
   }, [dias, mesFiltro]);
 
+  const periodoLabel = mesFiltro
+    ? `${MESES[mesFiltro.month]} ${mesFiltro.year}`
+    : dias === 7 ? "Últimos 7 días"
+    : dias === 30 ? "Últimos 30 días"
+    : dias === 90 ? "Últimos 3 meses"
+    : "Últimos 6 meses";
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     const params = buildParams();
@@ -186,7 +193,12 @@ export default function AnaliticasPage() {
     <div className="p-4 md:p-8 max-w-3xl mx-auto">
       {/* Header */}
       <div className="mb-4">
-        <h1 className="text-2xl font-bold mb-3" style={{ color: "#49517e" }}>Analíticas</h1>
+        <div className="flex items-baseline gap-3 mb-3">
+          <h1 className="text-2xl font-bold" style={{ color: "#49517e" }}>Analíticas</h1>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "#d4e1e2", color: "#49517e" }}>
+            {periodoLabel}
+          </span>
+        </div>
         <div className="flex flex-wrap gap-2 items-center">
           {/* Filtros rápidos */}
           <div className="flex gap-1 bg-muted rounded-lg p-1">

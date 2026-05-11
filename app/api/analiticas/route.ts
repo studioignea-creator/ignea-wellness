@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -114,9 +116,22 @@ export async function GET(req: NextRequest) {
   const pctCancelacion = (agendadas + canceladas) > 0 ? Math.round((canceladas / (agendadas + canceladas)) * 100) : 0;
 
   // ── Clientes nuevos vs recurrentes ──────────────────────
-  const emailCount: Record<string, number> = {};
-  for (const c of citasData.filter((c: { invitee_email: string }) => c.invitee_email)) {
-    emailCount[c.invitee_email] = (emailCount[c.invitee_email] ?? 0) + 1;
+  // Emails únicos que tuvieron cita en el período seleccionado
+  const emailsEnPeriodo = new Set(
+    citasData.filter((c: { invitee_email: string }) => c.invitee_email).map((c: { invitee_email: string }) => c.invitee_email)
+  );
+  // Emails que ya tenían cita ANTES del período → recurrentes
+  const { data: citasAnteriores } = await supabase
+    .from("calendly_cache")
+    .select("invitee_email")
+    .lt("start_time", desde.toISOString())
+    .not("invitee_email", "is", null);
+  const emailsHistoricos = new Set((citasAnteriores ?? []).map((c: { invitee_email: string }) => c.invitee_email));
+  let clientesNuevos = 0;
+  let clientesRecurrentes = 0;
+  for (const email of emailsEnPeriodo) {
+    if (emailsHistoricos.has(email)) clientesRecurrentes++;
+    else clientesNuevos++;
   }
 
   // ── Lista completa de citas ─────────────────────────────
@@ -158,8 +173,8 @@ export async function GET(req: NextRequest) {
       porHora: Object.entries(porHora)
         .map(([h, count]) => ({ hora: `${h.padStart(2, "0")}:00`, count }))
         .sort((a, b) => a.hora.localeCompare(b.hora)),
-      clientesNuevos: Object.values(emailCount).filter(n => n === 1).length,
-      clientesRecurrentes: Object.values(emailCount).filter(n => n > 1).length,
+      clientesNuevos,
+      clientesRecurrentes,
       citasLista,
     },
   });
