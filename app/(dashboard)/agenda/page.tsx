@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import WeekView from "@/components/agenda/WeekView";
 import type { CalendlyEvent } from "@/lib/types";
 
+const SISTEMA_DESDE = new Date("2026-05-01T00:00:00");
+
 export default function AgendaPage() {
   const [events, setEvents] = useState<CalendlyEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -14,12 +16,10 @@ export default function AgendaPage() {
   const [pendientesOpen, setPendientesOpen] = useState(true);
   const fullSyncDone = useRef(false);
 
-  const now = new Date();
-  const SISTEMA_DESDE = new Date("2026-05-01T00:00:00");
   const pendientes = events.filter(e =>
     e.status === "active" &&
     new Date(e.start_time) >= SISTEMA_DESDE &&
-    new Date(e.end_time) < now &&
+    new Date(e.end_time) < new Date() &&
     (e.asistio === null || e.asistio === undefined)
   );
 
@@ -29,7 +29,7 @@ export default function AgendaPage() {
     setLoading(false);
   }, []);
 
-  async function syncCalendly(meses: number) {
+  const syncCalendly = useCallback(async (meses: number) => {
     try {
       const res = await fetch("/api/agenda", {
         method: "POST",
@@ -40,7 +40,7 @@ export default function AgendaPage() {
     } catch {
       // silent — background sync failure doesn't block UX
     }
-  }
+  }, [fetchEvents]);
 
   // Al abrir: carga DB local inmediatamente, luego sincroniza 1 mes en background
   useEffect(() => {
@@ -48,8 +48,7 @@ export default function AgendaPage() {
       setSyncing(true);
       syncCalendly(1).finally(() => setSyncing(false));
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchEvents, syncCalendly]);
 
   // Cuando navega a semanas pasadas > 4 semanas, jala historial completo automáticamente
   useEffect(() => {
@@ -58,8 +57,7 @@ export default function AgendaPage() {
       setSyncing(true);
       syncCalendly(6).finally(() => setSyncing(false));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weekOffset]);
+  }, [weekOffset, syncCalendly]);
 
   return (
     <div className="p-4 md:p-8 max-w-2xl mx-auto">

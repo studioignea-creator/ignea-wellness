@@ -9,7 +9,6 @@ const MENSAJES = [
   { texto: "Eres la mejor esposa del mundo", emoji: "🌸💗🌸" },
   { texto: "Gracias por existir en mi vida", emoji: "💫🙏💫" },
   { texto: "Eres increíble, Amanda", emoji: "🌺✨🌺" },
-  { texto: "Lo que haces aquí transforma vidas", emoji: "🌿💫🌿" },
   { texto: "Hoy va a ser un día hermoso, igual que tú", emoji: "🌅💜🌅" },
   { texto: "Mi vida contigo es el mejor regalo", emoji: "🎁💜🎁" },
   { texto: "Eres la mujer más mágica del mundo", emoji: "🪄💜🪄" },

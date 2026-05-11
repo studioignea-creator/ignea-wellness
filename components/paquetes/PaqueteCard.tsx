@@ -29,7 +29,7 @@ export default function PaqueteCard({ paquete: p, onUso, onDeshacer }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
-  const pct = Math.round((p.sesiones_usadas / p.sesiones_total) * 100);
+  const pct = p.sesiones_total > 0 ? Math.round((p.sesiones_usadas / p.sesiones_total) * 100) : 0;
   const restantes = p.sesiones_total - p.sesiones_usadas;
   const completado = p.estado === "completado";
 

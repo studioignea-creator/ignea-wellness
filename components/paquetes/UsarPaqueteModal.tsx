@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Layers, CheckCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { formatMXN } from "@/lib/currency";
 
 interface Paquete {
@@ -50,12 +51,14 @@ export default function UsarPaqueteModal({ open, onClose, clienteNombre, calendl
     setUsando(null);
     if (res.ok) {
       const data = await res.json();
-      onUsado();
       onClose();
-      // Small delay to let parent show the toast
+      onUsado();
       if (data.completado) {
-        setTimeout(() => alert(`¡Paquete de ${clienteNombre} completado! Todas las sesiones fueron usadas.`), 100);
+        toast.success(`¡Paquete de ${clienteNombre ?? "la clienta"} completado! Todas las sesiones usadas ✓`, { duration: 6000 });
       }
+    } else {
+      const err = await res.json().catch(() => ({}));
+      toast.error(err.error ?? "Error al registrar sesión");
     }
   }
 

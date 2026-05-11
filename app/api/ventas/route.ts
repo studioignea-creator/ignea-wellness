@@ -14,6 +14,7 @@ export async function GET(req: NextRequest) {
   let query = supabase
     .from("ventas")
     .select("*")
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
   if (from) query = query.gte("created_at", from);

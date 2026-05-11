@@ -61,12 +61,18 @@ export default function SaleForm({ open, onClose, onSaved, prefill }: Props) {
   const [notas, setNotas] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // Reset form every time the dialog opens — avoids stale data from previous session
   useEffect(() => {
-    if (prefill) {
-      setCliente(prefill.cliente ?? "");
-      setItems([{ servicio: prefill.servicio ?? "", servicio_custom: "", monto: "" }]);
+    if (open) {
+      setCliente(prefill?.cliente ?? "");
+      setItems([{ servicio: prefill?.servicio ?? "", servicio_custom: "", monto: "" }]);
+      setMoneda("MXN");
+      setMetodoPago("efectivo");
+      setNotas("");
+      setSaving(false);
     }
-  }, [prefill]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const total = items.reduce((s, i) => s + (parseFloat(i.monto) || 0), 0);
 

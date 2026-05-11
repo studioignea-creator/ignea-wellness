@@ -1,6 +1,11 @@
 export type MetodoPago = "efectivo" | "tarjeta" | "transferencia";
 export type Moneda = "MXN" | "USD";
 
+export interface VentaItem {
+  servicio: string;
+  monto: number;
+}
+
 export interface Venta {
   id: string;
   created_at: string;
@@ -12,6 +17,7 @@ export interface Venta {
   metodo_pago: MetodoPago;
   notas: string | null;
   calendly_event_uuid: string | null;
+  items: VentaItem[] | null;
   user_id: string;
 }
 
