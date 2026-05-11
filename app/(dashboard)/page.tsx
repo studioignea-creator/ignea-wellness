@@ -16,20 +16,28 @@ async function getDashboardData() {
   const todayEnd = new Date();
   todayEnd.setHours(23, 59, 59, 999);
 
-  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const weekStart = new Date();
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+  weekStart.setHours(0, 0, 0, 0);
 
-  const [todayVentas, monthVentas, todayCitas, allProductos] = await Promise.all([
-    supabase.from("ventas").select("monto, moneda, metodo_pago").gte("created_at", todayStart.toISOString()).lte("created_at", todayEnd.toISOString()),
-    supabase.from("ventas").select("monto, moneda").gte("created_at", monthStart.toISOString()).eq("moneda", "MXN"),
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  monthEnd.setHours(23, 59, 59, 999);
+  const monthName = now.toLocaleDateString("es-MX", { month: "long", year: "numeric" });
+
+  const [weekVentas, monthVentas, todayCitas, allProductos] = await Promise.all([
+    supabase.from("ventas").select("monto, moneda, metodo_pago").gte("created_at", weekStart.toISOString()).lte("created_at", todayEnd.toISOString()),
+    supabase.from("ventas").select("monto, moneda").gte("created_at", monthStart.toISOString()).lte("created_at", monthEnd.toISOString()).eq("moneda", "MXN"),
     supabase.from("calendly_cache").select("calendly_uuid, start_time, end_time, invitee_name, event_type_name, status").gte("start_time", todayStart.toISOString()).lte("start_time", todayEnd.toISOString()).eq("status", "active").order("start_time"),
     supabase.from("productos").select("nombre, marca, stock_actual, stock_minimo"),
   ]);
 
-  const todayMXN = (todayVentas.data ?? []).filter((v) => v.moneda === "MXN").reduce((s, v) => s + v.monto, 0);
-  const todayCount = (todayVentas.data ?? []).length;
+  const weekMXN = (weekVentas.data ?? []).filter((v) => v.moneda === "MXN").reduce((s, v) => s + v.monto, 0);
+  const weekCount = (weekVentas.data ?? []).length;
   const monthTotal = (monthVentas.data ?? []).reduce((s, v) => s + v.monto, 0);
 
-  const byMethod = (todayVentas.data ?? []).reduce<Record<string, number>>((acc, v) => {
+  const byMethod = (weekVentas.data ?? []).reduce<Record<string, number>>((acc, v) => {
     if (v.moneda !== "MXN") return acc;
     acc[v.metodo_pago] = (acc[v.metodo_pago] ?? 0) + v.monto;
     return acc;
@@ -37,7 +45,7 @@ async function getDashboardData() {
 
   const lowStockProducts = (allProductos.data ?? []).filter(p => p.stock_actual <= p.stock_minimo);
 
-  return { todayMXN, todayCount, monthTotal, byMethod, todayCitas: todayCitas.data ?? [], lowStockProducts };
+  return { weekMXN, weekCount, monthTotal, monthName, byMethod, todayCitas: todayCitas.data ?? [], lowStockProducts };
 }
 
 const METODO_LABEL: Record<string, string> = {
@@ -68,11 +76,11 @@ export default async function DashboardPage() {
 
       <MensajeAmor />
 
-      {/* Today Revenue */}
+      {/* Week Revenue */}
       <div className="rounded-xl p-5 mb-4 text-white" style={{ background: "linear-gradient(135deg, #49517e 0%, #84719b 100%)" }}>
-        <p className="text-sm opacity-80 mb-1">Ingresos de hoy</p>
-        <p className="text-4xl font-bold">{formatMXN(data.todayMXN)}</p>
-        <p className="text-sm opacity-75 mt-1">{data.todayCount} venta{data.todayCount !== 1 ? "s" : ""}</p>
+        <p className="text-sm opacity-80 mb-1">Ingresos de la semana</p>
+        <p className="text-4xl font-bold">{formatMXN(data.weekMXN)}</p>
+        <p className="text-sm opacity-75 mt-1">{data.weekCount} venta{data.weekCount !== 1 ? "s" : ""}</p>
         {Object.keys(data.byMethod).length > 0 && (
           <div className="flex gap-4 mt-3 flex-wrap border-t border-white/20 pt-3">
             {Object.entries(data.byMethod).map(([m, v]) => (
@@ -89,7 +97,7 @@ export default async function DashboardPage() {
         <CardContent className="pt-5 pb-4 flex items-center gap-3">
           <TrendingUp className="h-5 w-5" style={{ color: "#49517e" }} />
           <div>
-            <p className="text-xs" style={{ color: "#84719b" }}>Este mes</p>
+            <p className="text-xs capitalize" style={{ color: "#84719b" }}>{data.monthName}</p>
             <p className="text-2xl font-bold" style={{ color: "#49517e" }}>{formatMXN(data.monthTotal)}</p>
           </div>
         </CardContent>

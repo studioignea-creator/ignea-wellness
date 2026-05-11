@@ -14,17 +14,18 @@ export async function GET(req: NextRequest) {
   }
 
   const { searchParams } = new URL(req.url);
-  const periodo = searchParams.get("periodo") ?? "mes";
-
   const now = new Date();
+
   let since: string;
-  if (periodo === "semana") {
-    const d = new Date(now); d.setDate(now.getDate() - 7);
-    since = d.toISOString().split("T")[0];
+  let until: string;
+  if (searchParams.get("desde") && searchParams.get("hasta")) {
+    since = searchParams.get("desde")!;
+    until = searchParams.get("hasta")!;
   } else {
-    since = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
+    const dias = parseInt(searchParams.get("dias") ?? "30");
+    since = new Date(now.getTime() - dias * 86400000).toISOString().split("T")[0];
+    until = now.toISOString().split("T")[0];
   }
-  const until = now.toISOString().split("T")[0];
 
   try {
     const fields = "spend,impressions,clicks,reach,cpm,cpc,actions";

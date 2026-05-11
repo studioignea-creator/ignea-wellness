@@ -10,6 +10,7 @@ interface Props {
   events: CalendlyEvent[];
   weekOffset: number;
   setWeekOffset: (fn: (o: number) => number) => void;
+  onRefresh?: () => void;
 }
 
 const DAYS_ES = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
@@ -26,7 +27,7 @@ function getWeekDays(offset: number): Date[] {
   });
 }
 
-export default function WeekView({ events, weekOffset, setWeekOffset }: Props) {
+export default function WeekView({ events, weekOffset, setWeekOffset, onRefresh }: Props) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -35,6 +36,7 @@ export default function WeekView({ events, weekOffset, setWeekOffset }: Props) {
 
   // When week changes: if current week → select today; else → select Monday
   const [selectedDay, setSelectedDay] = useState(todayInWeek >= 0 ? todayInWeek : 1);
+  const [mostrarCanceladas, setMostrarCanceladas] = useState(true);
 
   useEffect(() => {
     const newDays = getWeekDays(weekOffset);
@@ -44,7 +46,7 @@ export default function WeekView({ events, weekOffset, setWeekOffset }: Props) {
   }, [weekOffset]);
 
   const selectedDate = days[selectedDay] ?? days[1];
-  const dayEvents = events
+  const allDayEvents = events
     .filter((e) => {
       const d = new Date(e.start_time);
       return (
@@ -55,6 +57,9 @@ export default function WeekView({ events, weekOffset, setWeekOffset }: Props) {
     })
     .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
 
+  const canceladasCount = allDayEvents.filter(e => e.status === "canceled").length;
+  const dayEvents = mostrarCanceladas ? allDayEvents : allDayEvents.filter(e => e.status !== "canceled");
+
   const monthLabel = days[3].toLocaleDateString("es-MX", { month: "long", year: "numeric" });
   const isPastWeek = weekOffset < 0;
   const isCurrentWeek = weekOffset === 0;
@@ -63,7 +68,7 @@ export default function WeekView({ events, weekOffset, setWeekOffset }: Props) {
     return events.filter((e) => {
       const d = new Date(e.start_time);
       return d.getFullYear() === day.getFullYear() && d.getMonth() === day.getMonth() && d.getDate() === day.getDate();
-    }).length;
+    });
   }
 
   return (
@@ -102,7 +107,9 @@ export default function WeekView({ events, weekOffset, setWeekOffset }: Props) {
         {days.map((day, i) => {
           const isToday = day.getTime() === today.getTime();
           const isSelected = i === selectedDay;
-          const count = eventsOnDay(day);
+          const dayEvts = eventsOnDay(day);
+          const activeCount = dayEvts.filter(e => e.status !== "canceled").length;
+          const canceledCount = dayEvts.filter(e => e.status === "canceled").length;
           const isPast = day < today && !isToday;
           return (
             <button
@@ -116,27 +123,37 @@ export default function WeekView({ events, weekOffset, setWeekOffset }: Props) {
             >
               <span className="text-xs">{DAYS_ES[i]}</span>
               <span className="text-sm font-semibold">{day.getDate()}</span>
-              {count > 0 && (
-                <span className="h-1.5 w-1.5 rounded-full mt-0.5"
-                  style={{ background: isSelected ? "white" : "#84719b" }} />
-              )}
+              <div className="flex gap-0.5 mt-0.5 h-1.5">
+                {activeCount > 0 && <span className="h-1.5 w-1.5 rounded-full" style={{ background: isSelected ? "white" : "#84719b" }} />}
+                {canceledCount > 0 && <span className="h-1.5 w-1.5 rounded-full" style={{ background: isSelected ? "white" : "#e4a691" }} />}
+              </div>
             </button>
           );
         })}
       </div>
 
-      {/* Day label + count */}
+      {/* Day label + count + toggle canceladas */}
       <div className="flex items-center gap-2 mb-3">
         <CalendarDays className="h-4 w-4" style={{ color: "#84719b" }} />
         <span className="text-sm font-medium capitalize" style={{ color: "#49517e" }}>
           {selectedDate.toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" })}
         </span>
-        {dayEvents.length > 0 && (
-          <span className="ml-auto text-xs px-2 py-0.5 rounded-full"
-            style={{ background: "#d4e1e2", color: "#49517e" }}>
-            {dayEvents.length} cita{dayEvents.length !== 1 ? "s" : ""}
-          </span>
-        )}
+        <div className="ml-auto flex items-center gap-1.5">
+          {canceladasCount > 0 && (
+            <button
+              onClick={() => setMostrarCanceladas(v => !v)}
+              className="text-xs px-2 py-0.5 rounded-full transition-colors"
+              style={{ background: mostrarCanceladas ? "#f5d9d6" : "#f5f5f8", color: mostrarCanceladas ? "#c0555a" : "#b0aabe" }}>
+              {canceladasCount} cancelada{canceladasCount !== 1 ? "s" : ""}
+            </button>
+          )}
+          {allDayEvents.filter(e => e.status !== "canceled").length > 0 && (
+            <span className="text-xs px-2 py-0.5 rounded-full"
+              style={{ background: "#d4e1e2", color: "#49517e" }}>
+              {allDayEvents.filter(e => e.status !== "canceled").length} cita{allDayEvents.filter(e => e.status !== "canceled").length !== 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Events list */}
@@ -151,7 +168,7 @@ export default function WeekView({ events, weekOffset, setWeekOffset }: Props) {
             )}
           </div>
         ) : (
-          dayEvents.map((e) => <AppointmentCard key={e.calendly_uuid} event={e} />)
+          dayEvents.map((e) => <AppointmentCard key={e.calendly_uuid} event={e} onRefresh={onRefresh} />)
         )}
       </div>
     </div>

@@ -7,17 +7,28 @@ export async function GET(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
-  const dias = parseInt(searchParams.get("dias") ?? "30");
-
   const now = new Date();
-  const desde = new Date(now.getTime() - dias * 86400000);
+
+  let desde: Date;
+  let hasta: Date;
+  if (searchParams.get("desde") && searchParams.get("hasta")) {
+    desde = new Date(searchParams.get("desde")!);
+    hasta = new Date(searchParams.get("hasta")!);
+    hasta.setHours(23, 59, 59, 999);
+  } else {
+    const dias = parseInt(searchParams.get("dias") ?? "30");
+    desde = new Date(now.getTime() - dias * 86400000);
+    hasta = now;
+  }
 
   const desdeDate = desde.toISOString().split("T")[0];
 
+  const hastaDate = hasta.toISOString().split("T")[0];
+
   const [ventas, citas, gastosQ] = await Promise.all([
-    supabase.from("ventas").select("*").gte("created_at", desde.toISOString()).order("created_at"),
-    supabase.from("calendly_cache").select("*").gte("start_time", desde.toISOString()).order("start_time", { ascending: false }),
-    supabase.from("gastos").select("*").gte("fecha", desdeDate).order("fecha", { ascending: false }),
+    supabase.from("ventas").select("*").gte("created_at", desde.toISOString()).lte("created_at", hasta.toISOString()).order("created_at"),
+    supabase.from("calendly_cache").select("*").gte("start_time", desde.toISOString()).lte("start_time", hasta.toISOString()).order("start_time", { ascending: false }),
+    supabase.from("gastos").select("*").gte("fecha", desdeDate).lte("fecha", hastaDate).order("fecha", { ascending: false }),
   ]);
 
   const ventasData = ventas.data ?? [];

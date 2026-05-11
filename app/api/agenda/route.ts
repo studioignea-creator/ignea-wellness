@@ -14,15 +14,25 @@ export async function GET(req: NextRequest) {
   const from = searchParams.get("from") ?? defaultFrom;
   const to = searchParams.get("to") ?? defaultTo;
 
-  const { data, error } = await supabase
-    .from("calendly_cache")
-    .select("*")
-    .gte("start_time", from)
-    .lte("start_time", to + "T23:59:59Z")
-    .order("start_time");
+  const [eventsResult, ventasResult] = await Promise.all([
+    supabase.from("calendly_cache").select("*").gte("start_time", from).lte("start_time", to + "T23:59:59Z").order("start_time"),
+    supabase.from("ventas").select("calendly_event_uuid, monto, moneda").not("calendly_event_uuid", "is", null),
+  ]);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data ?? []);
+  if (eventsResult.error) return NextResponse.json({ error: eventsResult.error.message }, { status: 500 });
+
+  const ventasMap = new Map(
+    (ventasResult.data ?? []).map(v => [v.calendly_event_uuid, { monto: v.monto, moneda: v.moneda }])
+  );
+
+  const events = (eventsResult.data ?? []).map(e => ({
+    ...e,
+    tiene_venta: ventasMap.has(e.calendly_uuid),
+    monto_venta: ventasMap.get(e.calendly_uuid)?.monto ?? null,
+    moneda_venta: ventasMap.get(e.calendly_uuid)?.moneda ?? null,
+  }));
+
+  return NextResponse.json(events);
 }
 
 export async function POST(req: NextRequest) {

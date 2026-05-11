@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Clock, User, DollarSign, CheckCircle, XCircle, Layers } from "lucide-react";
+import { Clock, User, DollarSign, CheckCircle, XCircle, Layers, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -10,7 +10,7 @@ import UsarPaqueteModal from "@/components/paquetes/UsarPaqueteModal";
 import type { CalendlyEvent } from "@/lib/types";
 
 interface Props {
-  event: CalendlyEvent & { asistio?: boolean | null };
+  event: CalendlyEvent;
   onRefresh?: () => void;
 }
 
@@ -25,6 +25,7 @@ export default function AppointmentCard({ event, onRefresh }: Props) {
   const duration = Math.round((end.getTime() - start.getTime()) / 60000);
   const time = start.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" });
   const isPast = end < new Date();
+  const isCancelled = event.status === "canceled";
 
   async function confirmarAsistencia(valor: boolean) {
     setConfirming(true);
@@ -56,20 +57,26 @@ export default function AppointmentCard({ event, onRefresh }: Props) {
   return (
     <>
       <div className="rounded-xl border p-3 space-y-2.5" style={{
-        borderColor: asistio === true ? "#bfd8d2" : asistio === false ? "#f5d9d6" : "#d4e1e2",
-        background: asistio === true ? "#f0faf8" : asistio === false ? "#fff5f5" : "#fff",
+        borderColor: isCancelled ? "#e0e0e8" : asistio === true ? "#bfd8d2" : asistio === false ? "#f5d9d6" : "#d4e1e2",
+        background: isCancelled ? "#f8f8fb" : asistio === true ? "#f0faf8" : asistio === false ? "#fff5f5" : "#fff",
+        opacity: isCancelled ? 0.75 : 1,
       }}>
         {/* Top row */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <Clock className="h-3.5 w-3.5 shrink-0" style={{ color: "#84719b" }} />
-              <span className="text-sm font-semibold" style={{ color: "#49517e" }}>{time}</span>
+              <Clock className="h-3.5 w-3.5 shrink-0" style={{ color: isCancelled ? "#b0aabe" : "#84719b" }} />
+              <span className="text-sm font-semibold" style={{ color: isCancelled ? "#b0aabe" : "#49517e" }}>{time}</span>
               <Badge variant="outline" className="text-xs border-0" style={{ background: "#d4e1e2", color: "#49517e" }}>
                 {duration} min
               </Badge>
-              {asistio === true && <Badge variant="success" className="text-xs">Asistió ✓</Badge>}
-              {asistio === false && <Badge variant="danger" className="text-xs">No-show</Badge>}
+              {isCancelled && (
+                <span className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full" style={{ background: "#f5f5f8", color: "#b0aabe" }}>
+                  <Ban className="h-3 w-3" /> Cancelada
+                </span>
+              )}
+              {!isCancelled && asistio === true && <Badge variant="success" className="text-xs">Asistió ✓</Badge>}
+              {!isCancelled && asistio === false && <Badge variant="danger" className="text-xs">No-show</Badge>}
             </div>
             {event.event_type_name && (
               <p className="text-sm mt-1 font-medium" style={{ color: "#49517e" }}>{event.event_type_name}</p>
@@ -82,22 +89,32 @@ export default function AppointmentCard({ event, onRefresh }: Props) {
             )}
           </div>
 
-          <div className="flex gap-1.5 shrink-0">
-            <Button size="sm" variant="outline" className="text-xs h-8 border-0 px-2"
-              style={{ background: "#f5f5f8", color: "#84719b" }}
-              onClick={() => setShowPaquete(true)}>
-              <Layers className="h-3 w-3" />
-            </Button>
-            <Button size="sm" variant="outline" className="shrink-0 text-xs h-8 border-0 text-white"
-              style={{ background: "#84719b" }} onClick={handleRegistrarPago}>
-              <DollarSign className="h-3 w-3 mr-1" />
-              Pago
-            </Button>
-          </div>
+          {!isCancelled && (
+            <div className="flex gap-1.5 shrink-0">
+              {event.tiene_venta ? (
+                <span className="text-xs px-2 py-1 rounded-lg font-semibold" style={{ background: "#bfd8d2", color: "#49517e" }}>
+                  ${event.monto_venta?.toLocaleString()} {event.moneda_venta}
+                </span>
+              ) : (
+                <>
+                  <Button size="sm" variant="outline" className="text-xs h-8 border-0 px-2"
+                    style={{ background: "#f5f5f8", color: "#84719b" }}
+                    onClick={() => setShowPaquete(true)}>
+                    <Layers className="h-3 w-3" />
+                  </Button>
+                  <Button size="sm" variant="outline" className="shrink-0 text-xs h-8 border-0 text-white"
+                    style={{ background: "#84719b" }} onClick={handleRegistrarPago}>
+                    <DollarSign className="h-3 w-3 mr-1" />
+                    Pago
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Confirmación de asistencia — solo para citas pasadas */}
-        {isPast && asistio === null && (
+        {/* Confirmación de asistencia — solo para citas pasadas activas */}
+        {!isCancelled && isPast && asistio === null && (
           <div className="flex items-center gap-2 pt-1 border-t" style={{ borderColor: "#d4e1e2" }}>
             <span className="text-xs flex-1" style={{ color: "#84719b" }}>¿Asistió?</span>
             <Button size="sm" variant="outline" className="h-7 text-xs gap-1 border-0"
@@ -113,7 +130,7 @@ export default function AppointmentCard({ event, onRefresh }: Props) {
           </div>
         )}
 
-        {isPast && asistio !== null && (
+        {!isCancelled && isPast && asistio !== null && (
           <button className="text-xs underline block" style={{ color: "#84719b" }}
             onClick={() => setAsistio(null)}>
             Cambiar respuesta

@@ -38,6 +38,10 @@ export interface CalendlyEvent {
   event_type_name: string | null;
   location: string | null;
   synced_at: string;
+  asistio?: boolean | null;
+  tiene_venta?: boolean;
+  monto_venta?: number | null;
+  moneda_venta?: string | null;
 }
 
 export interface VentaFilters {

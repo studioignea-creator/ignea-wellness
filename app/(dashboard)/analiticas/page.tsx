@@ -24,6 +24,11 @@ const DIAS_OPTS = [
   { value: 180, label: "6 meses" },
 ];
 
+const MESES = [
+  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+];
+
 const TABS = ["Resumen", "Citas", "Finanzas"] as const;
 type Tab = typeof TABS[number];
 
@@ -112,6 +117,7 @@ function CitaRow({ c, onFilter }: {
 
 export default function AnaliticasPage() {
   const [dias, setDias] = useState(30);
+  const [mesFiltro, setMesFiltro] = useState<{ year: number; month: number } | null>(null);
   const [tab, setTab] = useState<Tab>("Resumen");
   const [data, setData] = useState<any>(null);
   const [meta, setMeta] = useState<any>(null);
@@ -121,16 +127,26 @@ export default function AnaliticasPage() {
   const [citaFiltro, setCitaFiltro] = useState<"todas" | "activas" | "canceladas" | "asistidas" | "noshow">("todas");
   const [busqueda, setBusqueda] = useState("");
 
+  const buildParams = useCallback(() => {
+    if (mesFiltro) {
+      const desde = new Date(mesFiltro.year, mesFiltro.month, 1).toISOString().split("T")[0];
+      const hasta = new Date(mesFiltro.year, mesFiltro.month + 1, 0).toISOString().split("T")[0];
+      return `desde=${desde}&hasta=${hasta}`;
+    }
+    return `dias=${dias}`;
+  }, [dias, mesFiltro]);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
+    const params = buildParams();
     const [anaRes, metaRes] = await Promise.all([
-      fetch(`/api/analiticas?dias=${dias}`),
-      fetch(`/api/meta?periodo=mes`),
+      fetch(`/api/analiticas?${params}`),
+      fetch(`/api/meta?${params}`),
     ]);
     if (anaRes.ok) setData(await anaRes.json());
     if (metaRes.ok) setMeta(await metaRes.json());
     setLoading(false);
-  }, [dias]);
+  }, [buildParams]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -169,16 +185,50 @@ export default function AnaliticasPage() {
   return (
     <div className="p-4 md:p-8 max-w-3xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold" style={{ color: "#49517e" }}>Analíticas</h1>
-        <div className="flex gap-1 bg-muted rounded-lg p-1">
-          {DIAS_OPTS.map(o => (
-            <button key={o.value} onClick={() => setDias(o.value)}
-              className="text-xs px-2.5 py-1.5 rounded-md transition-colors font-medium"
-              style={{ background: dias === o.value ? "#84719b" : "transparent", color: dias === o.value ? "white" : "#84719b" }}>
-              {o.label}
-            </button>
-          ))}
+      <div className="mb-4">
+        <h1 className="text-2xl font-bold mb-3" style={{ color: "#49517e" }}>Analíticas</h1>
+        <div className="flex flex-wrap gap-2 items-center">
+          {/* Filtros rápidos */}
+          <div className="flex gap-1 bg-muted rounded-lg p-1">
+            {DIAS_OPTS.map(o => (
+              <button key={o.value} onClick={() => { setDias(o.value); setMesFiltro(null); }}
+                className="text-xs px-2.5 py-1.5 rounded-md transition-colors font-medium"
+                style={{ background: !mesFiltro && dias === o.value ? "#84719b" : "transparent", color: !mesFiltro && dias === o.value ? "white" : "#84719b" }}>
+                {o.label}
+              </button>
+            ))}
+          </div>
+          {/* Selector de mes */}
+          <div className="flex gap-1 items-center">
+            <select
+              value={mesFiltro ? mesFiltro.month : ""}
+              onChange={e => {
+                const m = parseInt(e.target.value);
+                setMesFiltro({ year: mesFiltro?.year ?? new Date().getFullYear(), month: m });
+              }}
+              className="text-xs px-2 py-1.5 rounded-lg border font-medium"
+              style={{ borderColor: mesFiltro ? "#84719b" : "#d4e1e2", color: "#49517e", background: "white" }}>
+              <option value="" disabled>Mes</option>
+              {MESES.map((m, i) => <option key={i} value={i}>{m}</option>)}
+            </select>
+            <select
+              value={mesFiltro?.year ?? new Date().getFullYear()}
+              onChange={e => {
+                const y = parseInt(e.target.value);
+                setMesFiltro({ year: y, month: mesFiltro?.month ?? new Date().getMonth() });
+              }}
+              className="text-xs px-2 py-1.5 rounded-lg border font-medium"
+              style={{ borderColor: mesFiltro ? "#84719b" : "#d4e1e2", color: "#49517e", background: "white" }}>
+              {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+            {mesFiltro && (
+              <button onClick={() => setMesFiltro(null)}
+                className="text-xs px-2 py-1.5 rounded-lg font-medium"
+                style={{ background: "#f5d9d6", color: "#84719b" }}>
+                ✕
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

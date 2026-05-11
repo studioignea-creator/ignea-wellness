@@ -9,12 +9,19 @@ const MENSAJES = [
   { texto: "Eres la mejor esposa del mundo", emoji: "🌸💗🌸" },
   { texto: "Gracias por existir en mi vida", emoji: "💫🙏💫" },
   { texto: "Eres increíble, Amanda", emoji: "🌺✨🌺" },
-  { texto: "Cada día me enamoro más de ti", emoji: "💜🔥💜" },
-  { texto: "Eres mi lugar favorito en el mundo", emoji: "🌍💗🌍" },
   { texto: "Lo que haces aquí transforma vidas", emoji: "🌿💫🌿" },
   { texto: "Hoy va a ser un día hermoso, igual que tú", emoji: "🌅💜🌅" },
-  { texto: "Eres la mujer más especial que conozco", emoji: "💐🥰💐" },
   { texto: "Mi vida contigo es el mejor regalo", emoji: "🎁💜🎁" },
+  { texto: "Eres la mujer más mágica del mundo", emoji: "🪄💜🪄" },
+  { texto: "Eres la esposa más preciosa y perfecta", emoji: "💍🥰💍" },
+  { texto: "Eres el mejor regalo que me ha dado la vida", emoji: "🎁✨🎁" },
+  { texto: "Eres la mejor compañera de vida y de aventuras", emoji: "🌍💜🌍" },
+  { texto: "Ser tu esposo es lo mejor del mundo", emoji: "💜🙏💜" },
+  { texto: "Eres la mejor CF del mundo", emoji: "⭐💗⭐" },
+  { texto: "Eres la mejor facilitadora de Access Puerto Vallarta (hasta el Munchi lo sabe)", emoji: "🌊🐶🌊" },
+  { texto: "Eres la borrega del mes", emoji: "🐑🏆🐑" },
+  { texto: "Eres mi borrega favorita", emoji: "🐑💜🐑" },
+  { texto: "Hay una cucaracha :0", emoji: "🪳😱🪳" },
 ];
 
 const HEARTS = ["💜", "💗", "✨", "🌸", "💫"];
