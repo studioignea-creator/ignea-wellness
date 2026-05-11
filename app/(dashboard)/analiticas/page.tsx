@@ -216,22 +216,35 @@ export default function AnaliticasPage() {
               value={mesFiltro ? mesFiltro.month : ""}
               onChange={e => {
                 const m = parseInt(e.target.value);
-                setMesFiltro({ year: mesFiltro?.year ?? new Date().getFullYear(), month: m });
+                const y = mesFiltro?.year ?? new Date().getFullYear();
+                // Block months before May 2026
+                if (y === 2026 && m < 4) return;
+                setMesFiltro({ year: y, month: m });
               }}
               className="text-xs px-2 py-1.5 rounded-lg border font-medium"
               style={{ borderColor: mesFiltro ? "#84719b" : "#d4e1e2", color: "#49517e", background: "white" }}>
               <option value="" disabled>Mes</option>
-              {MESES.map((m, i) => <option key={i} value={i}>{m}</option>)}
+              {MESES.map((m, i) => {
+                const year = mesFiltro?.year ?? new Date().getFullYear();
+                const bloqueado = year === 2026 && i < 4;
+                return (
+                  <option key={i} value={i} disabled={bloqueado}>
+                    {m}{bloqueado ? " —" : ""}
+                  </option>
+                );
+              })}
             </select>
             <select
               value={mesFiltro?.year ?? new Date().getFullYear()}
               onChange={e => {
                 const y = parseInt(e.target.value);
-                setMesFiltro({ year: y, month: mesFiltro?.month ?? new Date().getMonth() });
+                const mes = mesFiltro?.month ?? 4; // default to May if switching to 2026
+                const mesFinal = y === 2026 && mes < 4 ? 4 : mes;
+                setMesFiltro({ year: y, month: mesFinal });
               }}
               className="text-xs px-2 py-1.5 rounded-lg border font-medium"
               style={{ borderColor: mesFiltro ? "#84719b" : "#d4e1e2", color: "#49517e", background: "white" }}>
-              {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
+              {[2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
             </select>
             {mesFiltro && (
               <button onClick={() => setMesFiltro(null)}
@@ -242,6 +255,27 @@ export default function AnaliticasPage() {
             )}
           </div>
         </div>
+
+        {/* Banner: período arranca desde el 1 de mayo */}
+        {(() => {
+          const SISTEMA_DESDE = new Date("2026-05-01");
+          let inicio: Date;
+          if (mesFiltro) {
+            inicio = new Date(mesFiltro.year, mesFiltro.month, 1);
+          } else {
+            inicio = new Date(Date.now() - dias * 86400000);
+          }
+          if (inicio < SISTEMA_DESDE) {
+            return (
+              <div className="mt-2 px-3 py-2 rounded-lg text-xs flex items-center gap-2"
+                style={{ background: "#f5f5f8", color: "#84719b" }}>
+                <span>ℹ️</span>
+                <span>Los datos del sistema comienzan el <strong>1 de mayo de 2026</strong>. No hay registros anteriores a esa fecha.</span>
+              </div>
+            );
+          }
+          return null;
+        })()}
       </div>
 
       {/* Tabs */}
@@ -283,7 +317,7 @@ export default function AnaliticasPage() {
             <>
               <SectionTitle>📣 Meta Ads</SectionTitle>
               <div className="grid grid-cols-2 gap-3">
-                <KPI label="Gasto en ads" value={`$${meta.spend?.toFixed(2) ?? "0"} USD`} color="#49517e" icon={Megaphone} />
+                <KPI label="Gasto en ads" value={`$${meta.spend?.toFixed(2) ?? "0"} MXN`} color="#49517e" icon={Megaphone} />
                 <KPI label="Costo por cita" value={costoPorCita ? `$${costoPorCita} USD` : "—"}
                   sub="ads ÷ citas" color="#84719b" icon={Target} />
                 <KPI label="Alcance" value={(meta.reach ?? 0).toLocaleString()} color="#bfd8d2" icon={Users} />
