@@ -136,7 +136,7 @@ export default function AnaliticasPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e8" />
                 <XAxis dataKey="semana" tick={{ fontSize: 11, fill: "#84719b" }} />
                 <YAxis tick={{ fontSize: 11, fill: "#84719b" }} tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} />
-                <Tooltip formatter={(v: number) => formatMXN(v)} labelStyle={{ color: "#49517e" }} />
+                <Tooltip formatter={(v: any) => formatMXN(Number(v))} labelStyle={{ color: "#49517e" }} />
                 <Bar dataKey="total" fill="#84719b" radius={[4, 4, 0, 0]} name="Ingresos" />
               </BarChart>
             </ResponsiveContainer>
