@@ -1,0 +1,47 @@
+export type MetodoPago = "efectivo" | "tarjeta" | "transferencia";
+export type Moneda = "MXN" | "USD";
+
+export interface Venta {
+  id: string;
+  created_at: string;
+  cliente_nombre: string;
+  servicio: string;
+  es_paquete: boolean;
+  monto: number;
+  moneda: Moneda;
+  metodo_pago: MetodoPago;
+  notas: string | null;
+  calendly_event_uuid: string | null;
+  user_id: string;
+}
+
+export interface Producto {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  marca: string;
+  nombre: string;
+  stock_actual: number;
+  stock_minimo: number;
+  unidad: string;
+  pedir: boolean;
+  notas: string | null;
+}
+
+export interface CalendlyEvent {
+  calendly_uuid: string;
+  start_time: string;
+  end_time: string;
+  status: "active" | "canceled";
+  invitee_name: string | null;
+  invitee_email: string | null;
+  event_type_name: string | null;
+  location: string | null;
+  synced_at: string;
+}
+
+export interface VentaFilters {
+  from?: string;
+  to?: string;
+  metodo?: MetodoPago | "";
+}
