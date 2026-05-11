@@ -14,7 +14,7 @@ export default function VentasPage() {
   const searchParams = useSearchParams();
   const [ventas, setVentas] = useState<Venta[]>([]);
   const [loading, setLoading] = useState(true);
-  const [metodoFilter, setMetodoFilter] = useState("");
+  const [metodoFilter, setMetodoFilter] = useState("all");
   const [showForm, setShowForm] = useState(false);
 
   const prefill = {
@@ -29,7 +29,7 @@ export default function VentasPage() {
 
   const fetchVentas = useCallback(async () => {
     const params = new URLSearchParams();
-    if (metodoFilter) params.set("metodo", metodoFilter);
+    if (metodoFilter && metodoFilter !== "all") params.set("metodo", metodoFilter);
     const res = await fetch(`/api/ventas?${params}`);
     if (res.ok) setVentas(await res.json());
     setLoading(false);
@@ -56,7 +56,7 @@ export default function VentasPage() {
             <SelectValue placeholder="Todos los métodos" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos</SelectItem>
+            <SelectItem value="all">Todos</SelectItem>
             <SelectItem value="efectivo">Efectivo</SelectItem>
             <SelectItem value="tarjeta">Tarjeta</SelectItem>
             <SelectItem value="transferencia">Transferencia</SelectItem>
