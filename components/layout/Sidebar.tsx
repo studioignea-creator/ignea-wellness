@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, DollarSign, Calendar, Package, LogOut, Sparkles, BarChart2 } from "lucide-react";
+import { LayoutDashboard, DollarSign, Calendar, Package, LogOut, Sparkles, BarChart2, Layers, Receipt } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,9 @@ const NAV = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/ventas", label: "Ventas", icon: DollarSign },
   { href: "/agenda", label: "Agenda", icon: Calendar },
+  { href: "/paquetes", label: "Paquetes", icon: Layers },
   { href: "/productos", label: "Stock", icon: Package },
+  { href: "/gastos", label: "Gastos", icon: Receipt },
   { href: "/analiticas", label: "Analíticas", icon: BarChart2 },
 ];
 

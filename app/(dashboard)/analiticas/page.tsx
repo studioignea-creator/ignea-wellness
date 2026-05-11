@@ -159,6 +159,13 @@ export default function AnaliticasPage() {
     ? (meta.spend / data.calendly.agendadas).toFixed(2)
     : null;
 
+  const gastosMeta = (meta?.configured && !meta?.error) ? (meta?.spend ?? 0) : 0;
+  const gastosOtros = data?.gastos?.total ?? 0;
+  const totalGastos = gastosMeta + gastosOtros;
+  const ingresosMXN = data?.financiero?.totalMXN ?? 0;
+  const gananciaNeta = ingresosMXN - totalGastos;
+  const margenPct = ingresosMXN > 0 ? Math.round((gananciaNeta / ingresosMXN) * 100) : 0;
+
   return (
     <div className="p-4 md:p-8 max-w-3xl mx-auto">
       {/* Header */}
@@ -374,9 +381,40 @@ export default function AnaliticasPage() {
       {/* ══════════════════ FINANZAS TAB ══════════════════ */}
       {tab === "Finanzas" && (
         <>
+          {/* P&L resumen */}
+          <div className="rounded-2xl p-4 mb-4" style={{ background: "#f5f5f8", border: "1px solid #d4e1e2" }}>
+            <p className="text-xs font-semibold mb-3" style={{ color: "#84719b" }}>Resumen del período</p>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span style={{ color: "#49517e" }}>Ingresos</span>
+                <span className="font-semibold" style={{ color: "#49517e" }}>{formatMXN(ingresosMXN)}</span>
+              </div>
+              {gastosMeta > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span style={{ color: "#84719b" }}>— Publicidad (Meta Ads)</span>
+                  <span style={{ color: "#c0555a" }}>−{formatMXN(gastosMeta)}</span>
+                </div>
+              )}
+              {gastosOtros > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span style={{ color: "#84719b" }}>— Otros gastos</span>
+                  <span style={{ color: "#c0555a" }}>−{formatMXN(gastosOtros)}</span>
+                </div>
+              )}
+              <div className="border-t pt-2 flex justify-between text-sm font-bold" style={{ borderColor: "#d4e1e2" }}>
+                <span style={{ color: "#49517e" }}>Ganancia neta</span>
+                <span style={{ color: gananciaNeta >= 0 ? "#5a9c7e" : "#c0555a" }}>{formatMXN(gananciaNeta)}</span>
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <KPI label="Total MXN" value={formatMXN(data?.financiero?.totalMXN ?? 0)}
               sub={`${data?.financiero?.totalVentas ?? 0} ventas`} color="#84719b" icon={DollarSign} />
+            <KPI label="Margen neto" value={`${margenPct}%`}
+              sub="después de gastos" color={margenPct >= 0 ? "#5a9c7e" : "#c0555a"} icon={TrendingUp} />
+            <KPI label="Total gastos" value={formatMXN(totalGastos)}
+              sub={gastosMeta > 0 ? `Ads: ${formatMXN(gastosMeta)}` : undefined} color="#e4a691" icon={DollarSign} />
             <KPI label="Ticket promedio" value={formatMXN(data?.financiero?.ticketPromedio ?? 0)}
               color="#49517e" icon={TrendingUp} />
             {(data?.financiero?.totalUSD ?? 0) > 0 && (
@@ -424,6 +462,35 @@ export default function AnaliticasPage() {
                     </div>
                   );
                 })}
+              </div>
+            </>
+          )}
+
+          {/* Desglose de gastos */}
+          {(totalGastos > 0) && (
+            <>
+              <SectionTitle>📋 Desglose de gastos</SectionTitle>
+              <div className="space-y-2">
+                {gastosMeta > 0 && (
+                  <div className="flex items-center justify-between rounded-lg px-3 py-2.5"
+                    style={{ background: "#f5f5f8" }}>
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full" style={{ background: "#49517e" }} />
+                      <span className="text-sm" style={{ color: "#49517e" }}>Meta Ads</span>
+                    </div>
+                    <span className="text-sm font-semibold" style={{ color: "#c0555a" }}>{formatMXN(gastosMeta)}</span>
+                  </div>
+                )}
+                {(data?.gastos?.porCategoria ?? []).map((g: { categoria: string; total: number }) => (
+                  <div key={g.categoria} className="flex items-center justify-between rounded-lg px-3 py-2.5"
+                    style={{ background: "#f5f5f8" }}>
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full" style={{ background: "#84719b" }} />
+                      <span className="text-sm capitalize" style={{ color: "#49517e" }}>{g.categoria}</span>
+                    </div>
+                    <span className="text-sm font-semibold" style={{ color: "#c0555a" }}>{formatMXN(g.total)}</span>
+                  </div>
+                ))}
               </div>
             </>
           )}

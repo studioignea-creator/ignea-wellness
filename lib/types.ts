@@ -45,3 +45,14 @@ export interface VentaFilters {
   to?: string;
   metodo?: MetodoPago | "";
 }
+
+export type CategoriaGasto = "publicidad" | "renta" | "suministros" | "personal" | "servicios" | "otros";
+
+export interface Gasto {
+  id: string;
+  fecha: string;
+  categoria: CategoriaGasto;
+  descripcion: string | null;
+  monto: number;
+  created_at: string;
+}

@@ -12,13 +12,24 @@ export async function GET(req: NextRequest) {
   const now = new Date();
   const desde = new Date(now.getTime() - dias * 86400000);
 
-  const [ventas, citas] = await Promise.all([
+  const desdeDate = desde.toISOString().split("T")[0];
+
+  const [ventas, citas, gastosQ] = await Promise.all([
     supabase.from("ventas").select("*").gte("created_at", desde.toISOString()).order("created_at"),
     supabase.from("calendly_cache").select("*").gte("start_time", desde.toISOString()).order("start_time", { ascending: false }),
+    supabase.from("gastos").select("*").gte("fecha", desdeDate).order("fecha", { ascending: false }),
   ]);
 
   const ventasData = ventas.data ?? [];
   const citasData = citas.data ?? [];
+  const gastosData = gastosQ.data ?? [];
+
+  // ── Gastos ──────────────────────────────────────────────
+  const totalGastos = gastosData.reduce((s: number, g: { monto: number }) => s + Number(g.monto), 0);
+  const porCategoriaGastos: Record<string, number> = {};
+  for (const g of gastosData) {
+    porCategoriaGastos[g.categoria] = (porCategoriaGastos[g.categoria] ?? 0) + Number(g.monto);
+  }
 
   // ── Financiero ──────────────────────────────────────────
   const ventasMXN = ventasData.filter(v => v.moneda === "MXN");
@@ -112,6 +123,10 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     financiero: { totalMXN, totalUSD, ticketPromedio, totalVentas: ventasData.length },
+    gastos: {
+      total: totalGastos,
+      porCategoria: Object.entries(porCategoriaGastos).map(([categoria, total]) => ({ categoria, total })),
+    },
     porServicio: Object.entries(porServicio)
       .map(([servicio, d]) => ({ servicio, ...d }))
       .sort((a, b) => b.total - a.total),
