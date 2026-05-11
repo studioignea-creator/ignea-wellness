@@ -14,6 +14,7 @@ const SERVICIOS_PAQUETE = [
   "Paquete 5 sesiones",
   "Paquete 10 sesiones",
   "Paquete personalizado",
+  "Otro",
 ];
 
 const METODOS: { value: MetodoPago; label: string }[] = [
@@ -37,6 +38,7 @@ interface Props {
 export default function NuevoPaqueteForm({ open, onClose, onSaved, prefill }: Props) {
   const [cliente, setCliente] = useState(prefill?.cliente ?? "");
   const [servicio, setServicio] = useState("");
+  const [servicioCustom, setServicioCustom] = useState("");
   const [sesiones, setSesiones] = useState(5);
   const [monto, setMonto] = useState("");
   const [moneda, setMoneda] = useState<Moneda>("MXN");
@@ -50,8 +52,9 @@ export default function NuevoPaqueteForm({ open, onClose, onSaved, prefill }: Pr
   }
 
   async function handleSave() {
+    const servicioFinal = servicio === "Otro" ? servicioCustom.trim() : servicio;
     if (!cliente.trim()) { toast.error("Escribe el nombre de la clienta"); return; }
-    if (!servicio) { toast.error("Selecciona el servicio"); return; }
+    if (!servicioFinal) { toast.error("Escribe el nombre del servicio"); return; }
     if (!monto || parseFloat(monto) <= 0) { toast.error("Ingresa el monto del paquete"); return; }
 
     setSaving(true);
@@ -61,7 +64,7 @@ export default function NuevoPaqueteForm({ open, onClose, onSaved, prefill }: Pr
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           cliente_nombre: cliente,
-          servicio,
+          servicio: servicioFinal,
           sesiones_total: sesiones,
           monto_total: parseFloat(monto),
           moneda,
@@ -104,6 +107,15 @@ export default function NuevoPaqueteForm({ open, onClose, onSaved, prefill }: Pr
               </SelectContent>
             </Select>
           </div>
+
+          {servicio === "Otro" && (
+            <div className="space-y-1">
+              <Label style={{ color: "#49517e" }}>Nombre del servicio</Label>
+              <Input placeholder="Ej: Masaje + Reiki, Terapia especial..." value={servicioCustom}
+                onChange={e => setServicioCustom(e.target.value)}
+                className="bg-white border-0" style={{ boxShadow: "0 0 0 1px #d4e1e2" }} />
+            </div>
+          )}
 
           <div className="space-y-1">
             <Label style={{ color: "#49517e" }}>Número de sesiones</Label>
