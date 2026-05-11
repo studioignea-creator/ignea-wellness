@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, DollarSign, Calendar, Package } from "lucide-react";
+import { LayoutDashboard, DollarSign, Calendar, Package, BarChart2 } from "lucide-react";
 
 const TABS = [
   { href: "/", label: "Inicio", icon: LayoutDashboard },
   { href: "/ventas", label: "Ventas", icon: DollarSign },
   { href: "/agenda", label: "Agenda", icon: Calendar },
   { href: "/productos", label: "Stock", icon: Package },
+  { href: "/analiticas", label: "Stats", icon: BarChart2 },
 ];
 
 export default function BottomNav() {
@@ -23,11 +24,11 @@ export default function BottomNav() {
             <Link
               key={href}
               href={href}
-              className="flex flex-1 flex-col items-center justify-center gap-1 text-xs transition-colors"
+              className="flex flex-1 flex-col items-center justify-center gap-0.5 text-xs transition-colors relative"
               style={{ color: active ? "#49517e" : "#84719b" }}
             >
               <Icon className="h-5 w-5" />
-              <span style={{ fontWeight: active ? 600 : 400 }}>{label}</span>
+              <span style={{ fontWeight: active ? 600 : 400, fontSize: "10px" }}>{label}</span>
               {active && <span className="absolute bottom-0 h-0.5 w-8 rounded-t-full" style={{ background: "#84719b" }} />}
             </Link>
           );

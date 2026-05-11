@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, DollarSign, Calendar, Package, LogOut, Sparkles } from "lucide-react";
+import { LayoutDashboard, DollarSign, Calendar, Package, LogOut, Sparkles, BarChart2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ const NAV = [
   { href: "/ventas", label: "Ventas", icon: DollarSign },
   { href: "/agenda", label: "Agenda", icon: Calendar },
   { href: "/productos", label: "Stock", icon: Package },
+  { href: "/analiticas", label: "Analíticas", icon: BarChart2 },
 ];
 
 export default function Sidebar() {
@@ -40,17 +41,8 @@ export default function Sidebar() {
         {NAV.map(({ href, label, icon: Icon }) => {
           const active = pathname === href;
           return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-              )}
-              style={{
-                background: active ? "#f5d9d6" : "transparent",
-                color: active ? "#49517e" : "#84719b",
-              }}
-            >
+            <Link key={href} href={href} className={cn("flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors")}
+              style={{ background: active ? "#f5d9d6" : "transparent", color: active ? "#49517e" : "#84719b" }}>
               <Icon className="h-4 w-4" />
               {label}
             </Link>
@@ -59,13 +51,7 @@ export default function Sidebar() {
       </nav>
 
       <div className="p-4 border-t" style={{ borderColor: "#d4e1e2" }}>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start"
-          style={{ color: "#84719b" }}
-          onClick={handleLogout}
-        >
+        <Button variant="ghost" size="sm" className="w-full justify-start" style={{ color: "#84719b" }} onClick={handleLogout}>
           <LogOut className="h-4 w-4 mr-2" />
           Cerrar sesión
         </Button>
