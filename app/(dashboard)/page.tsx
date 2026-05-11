@@ -34,11 +34,10 @@ async function getDashboardData() {
     supabase.from("calendly_cache").select("calendly_uuid, start_time, end_time, invitee_name, event_type_name, status").gte("start_time", todayStart.toISOString()).lte("start_time", todayEnd.toISOString()).eq("status", "active").order("start_time"),
     supabase.from("productos").select("nombre, marca, stock_actual, stock_minimo"),
     supabase.from("calendly_cache")
-      .select("calendly_uuid, invitee_name, start_time")
+      .select("calendly_uuid, invitee_name, start_time, end_time, asistio")
       .eq("status", "active")
       .gte("start_time", SISTEMA_DESDE)
-      .lt("end_time", now.toISOString())
-      .is("asistio", null),
+      .lt("start_time", now.toISOString()),
   ]);
 
   const weekMXN = (weekVentas.data ?? []).filter((v) => v.moneda === "MXN").reduce((s, v) => s + v.monto, 0);
@@ -53,7 +52,9 @@ async function getDashboardData() {
 
   const lowStockProducts = (allProductos.data ?? []).filter(p => p.stock_actual <= p.stock_minimo);
 
-  const pendientesCitas = pendientesQ.data ?? [];
+  const pendientesCitas = (pendientesQ.data ?? []).filter(
+    e => e.asistio === null || e.asistio === undefined
+  );
 
   return { weekMXN, weekCount, monthTotal, monthName, byMethod, todayCitas: todayCitas.data ?? [], lowStockProducts, pendientesCitas };
 }
