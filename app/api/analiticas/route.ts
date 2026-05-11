@@ -11,6 +11,8 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const now = new Date();
 
+  const SISTEMA_DESDE = new Date("2026-05-01T00:00:00");
+
   let desde: Date;
   let hasta: Date;
   if (searchParams.get("desde") && searchParams.get("hasta")) {
@@ -22,6 +24,9 @@ export async function GET(req: NextRequest) {
     desde = new Date(now.getTime() - dias * 86400000);
     hasta = now;
   }
+
+  // Never look before May 1 2026 — data before that is incomplete
+  if (desde < SISTEMA_DESDE) desde = SISTEMA_DESDE;
 
   const desdeDate = desde.toISOString().split("T")[0];
 

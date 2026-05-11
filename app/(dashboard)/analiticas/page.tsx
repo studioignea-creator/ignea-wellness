@@ -284,8 +284,8 @@ export default function AnaliticasPage() {
               <SectionTitle>📣 Meta Ads</SectionTitle>
               <div className="grid grid-cols-2 gap-3">
                 <KPI label="Gasto en ads" value={`$${meta.spend?.toFixed(2) ?? "0"} USD`} color="#49517e" icon={Megaphone} />
-                <KPI label="Costo por click" value={meta.cpc ? `$${Number(meta.cpc).toFixed(2)} USD` : "—"}
-                  sub="CPC promedio" color="#84719b" icon={Target} />
+                <KPI label="Costo por cita" value={costoPorCita ? `$${costoPorCita} USD` : "—"}
+                  sub="ads ÷ citas" color="#84719b" icon={Target} />
                 <KPI label="Alcance" value={(meta.reach ?? 0).toLocaleString()} color="#bfd8d2" icon={Users} />
                 <KPI label="Clicks" value={(meta.clicks ?? 0).toLocaleString()}
                   sub={`CPM $${meta.cpm?.toFixed(2) ?? 0}`} color="#e4a691" icon={TrendingUp} />
