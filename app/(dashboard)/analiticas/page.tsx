@@ -283,9 +283,9 @@ export default function AnaliticasPage() {
             <>
               <SectionTitle>📣 Meta Ads</SectionTitle>
               <div className="grid grid-cols-2 gap-3">
-                <KPI label="Gasto en ads" value={`$${meta.spend?.toFixed(2) ?? "0"} MXN`} color="#49517e" icon={Megaphone} />
-                <KPI label="Costo por cita" value={costoPorCita ? `$${costoPorCita} MXN` : "—"}
-                  sub="gasto / citas" color="#84719b" icon={Target} />
+                <KPI label="Gasto en ads" value={`$${meta.spend?.toFixed(2) ?? "0"} USD`} color="#49517e" icon={Megaphone} />
+                <KPI label="Costo por click" value={meta.cpc ? `$${Number(meta.cpc).toFixed(2)} USD` : "—"}
+                  sub="CPC promedio" color="#84719b" icon={Target} />
                 <KPI label="Alcance" value={(meta.reach ?? 0).toLocaleString()} color="#bfd8d2" icon={Users} />
                 <KPI label="Clicks" value={(meta.clicks ?? 0).toLocaleString()}
                   sub={`CPM $${meta.cpm?.toFixed(2) ?? 0}`} color="#e4a691" icon={TrendingUp} />
@@ -310,16 +310,36 @@ export default function AnaliticasPage() {
             </>
           )}
 
-          <div className="grid grid-cols-2 gap-3 mt-5">
-            <div className="rounded-xl p-4 text-center" style={{ background: "#bfd8d2" }}>
-              <p className="text-2xl font-bold" style={{ color: "#49517e" }}>{data?.calendly?.clientesNuevos ?? 0}</p>
-              <p className="text-xs mt-1" style={{ color: "#49517e" }}>Clientes nuevas</p>
+          {/* Clientes */}
+          {(data?.calendly?.clientesNuevos ?? 0) + (data?.calendly?.clientesRecurrentes ?? 0) > 0 ? (
+            <>
+              <SectionTitle>👥 Clientas en el período</SectionTitle>
+              <div className="rounded-xl p-4" style={{ background: "#f5f5f8" }}>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-semibold" style={{ color: "#49517e" }}>
+                    {(data.calendly.clientesNuevos ?? 0) + (data.calendly.clientesRecurrentes ?? 0)} clientas únicas
+                  </span>
+                  <span className="text-xs" style={{ color: "#84719b" }}>{periodoLabel}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-lg p-3 text-center" style={{ background: "#bfd8d2" }}>
+                    <p className="text-2xl font-bold" style={{ color: "#49517e" }}>{data.calendly.clientesNuevos ?? 0}</p>
+                    <p className="text-xs mt-0.5" style={{ color: "#49517e" }}>Primera vez</p>
+                    <p className="text-xs mt-0.5" style={{ color: "#5a9c7e" }}>nunca antes agendadas</p>
+                  </div>
+                  <div className="rounded-lg p-3 text-center" style={{ background: "#f5d9d6" }}>
+                    <p className="text-2xl font-bold" style={{ color: "#49517e" }}>{data.calendly.clientesRecurrentes ?? 0}</p>
+                    <p className="text-xs mt-0.5" style={{ color: "#49517e" }}>Recurrentes</p>
+                    <p className="text-xs mt-0.5" style={{ color: "#84719b" }}>ya habían agendado antes</p>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="mt-5 rounded-xl p-4 text-center text-xs" style={{ background: "#f5f5f8", color: "#b0aabe" }}>
+              Sin datos de clientas — sincroniza Calendly para ver este indicador
             </div>
-            <div className="rounded-xl p-4 text-center" style={{ background: "#f5d9d6" }}>
-              <p className="text-2xl font-bold" style={{ color: "#49517e" }}>{data?.calendly?.clientesRecurrentes ?? 0}</p>
-              <p className="text-xs mt-1" style={{ color: "#49517e" }}>Clientes recurrentes</p>
-            </div>
-          </div>
+          )}
         </>
       )}
 

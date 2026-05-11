@@ -129,10 +129,10 @@ export async function GET(req: NextRequest) {
   const emailsHistoricos = new Set((citasAnteriores ?? []).map((c: { invitee_email: string }) => c.invitee_email));
   let clientesNuevos = 0;
   let clientesRecurrentes = 0;
-  for (const email of emailsEnPeriodo) {
+  Array.from(emailsEnPeriodo).forEach(email => {
     if (emailsHistoricos.has(email)) clientesRecurrentes++;
     else clientesNuevos++;
-  }
+  });
 
   // ── Lista completa de citas ─────────────────────────────
   const citasLista = citasData.map((c: Record<string, unknown>) => ({
