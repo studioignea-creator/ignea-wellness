@@ -45,12 +45,15 @@ export default function ProductForm({ open, onClose, onSaved, initial }: Props) 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? `HTTP ${res.status}`);
+      }
       toast.success(isEdit ? "Producto actualizado" : "Producto agregado");
       onSaved();
       onClose();
-    } catch {
-      toast.error("Error al guardar");
+    } catch (err) {
+      toast.error(`Error: ${err instanceof Error ? err.message : "desconocido"}`);
     } finally {
       setSaving(false);
     }

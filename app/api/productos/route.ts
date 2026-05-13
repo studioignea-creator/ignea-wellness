@@ -23,8 +23,11 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const payload = {
-    ...body,
-    user_id: user.id,
+    marca: body.marca,
+    nombre: body.nombre,
+    stock_actual: body.stock_actual,
+    stock_minimo: body.stock_minimo,
+    unidad: body.unidad,
     notas: body.notas?.trim() || null,
   };
   const { data, error } = await supabase.from("productos").insert(payload).select().single();
